@@ -42,16 +42,18 @@ const TEST_TYPES = {
     itrFile:    "ptm_itr.json"
   },
   electrical: {
-    name: "Электробезопасность",
-    title: "Электробезопасность — 2 группа",
+    name: "Электробез",
+    title: "Электробез",
     commonFile: "electrical.json",
-    isCommon: true
+    isCommon: true,
+    questionCount: 56
   },
   slinger: { 
     name: "Стропальщик", 
     title: "Стропальщик",
     commonFile: "slinger.json",
-    isCommon: true
+    isCommon: true,
+    questionCount: 20
   }
 };
 
@@ -139,7 +141,7 @@ async function login() {
   if (!enteredPassword) return showLoginScreen('Введите пароль');
 
   try {
-    const res = await fetch('/t-e-s-t/passwords.json');
+    const res = await fetch('./passwords.json');
     if (!res.ok) throw new Error('Не удалось загрузить базу');
 
     const data = await res.json();
@@ -258,7 +260,7 @@ async function loadQuestions(type) {
     let fileName = config.isCommon ? config.commonFile : 
                    (currentCategory === 'itr' ? config.itrFile : config.workerFile);
 
-    const filePath = '/testing/' + fileName;
+    const filePath = './' + fileName;
 
     const res = await fetch(filePath);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -290,7 +292,7 @@ function initTest() {
   clearInterval(timerInterval);
 
   let questionCount = TEST_TYPES[currentTestType].isCommon 
-    ? QUIZ_COUNT.slinger 
+    ? TEST_TYPES[currentTestType].questionCount 
     : (currentCategory === 'itr' 
         ? QUIZ_COUNT.itr[currentTestType] 
         : QUIZ_COUNT.worker[currentTestType]);
@@ -397,7 +399,7 @@ function renderResult() {
   const pct = Math.round((correct / TOTAL) * 100);
   const passed = pct >= PASS_PERCENT;
   const categoryName = TEST_TYPES[currentTestType].isCommon 
-    ? 'Стропальщик' 
+    ? TEST_TYPES[currentTestType].name 
     : (currentCategory === 'itr' ? 'ИТР' : 'Рабочие');
 
   const letters = ['a','b','c','d','e','f'];
