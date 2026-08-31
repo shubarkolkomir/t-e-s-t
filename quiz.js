@@ -139,7 +139,7 @@ async function login() {
   if (!enteredPassword) return showLoginScreen('Введите пароль');
 
   try {
-    const res = await fetch('/testing/passwords.json');
+    const res = await fetch('/t-e-s-t/passwords.json');
     if (!res.ok) throw new Error('Не удалось загрузить базу');
 
     const data = await res.json();
