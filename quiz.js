@@ -46,7 +46,7 @@ const TEST_TYPES = {
     title: "Электробез",
     commonFile: "electrical.json",
     isCommon: true,
-    questionCount: 56
+    questionCount: 20
   },
   slinger: { 
     name: "Стропальщик", 
@@ -56,18 +56,18 @@ const TEST_TYPES = {
     questionCount: 20
   },
   civil_protection: { name: "Гражданская защита", title: "Гражданская защита", commonFile: "civil_protection.json", isCommon: true, questionCount: 20 },
-  mining: { name: "Горные и геологоразведочные работы", title: "Горные и геологоразведочные работы", commonFile: "mining.json", isCommon: true, questionCount: 100 },
-  solid_minerals: { name: "Переработка твердых полезных ископаемых", title: "Переработка твердых полезных ископаемых", commonFile: "solid_minerals.json", isCommon: true, questionCount: 96 },
-  tailings: { name: "Хвостовые и шламовые хозяйства", title: "Хвостовые и шламовые хозяйства", commonFile: "tailings.json", isCommon: true, questionCount: 100 },
-  blasting: { name: "Взрывные работы", title: "Взрывные работы", commonFile: "blasting.json", isCommon: true, questionCount: 100 },
-  lifting_mechanisms: { name: "Грузоподъемные механизмы", title: "Грузоподъемные механизмы", commonFile: "lifting_mechanisms.json", isCommon: true, questionCount: 99 },
-  pressure_equipment: { name: "Оборудование под давлением", title: "Оборудование под давлением", commonFile: "pressure_equipment.json", isCommon: true, questionCount: 115 },
-  metallurgy: { name: "Производство расплавов металлов", title: "Производство расплавов металлов", commonFile: "metallurgy.json", isCommon: true, questionCount: 100 },
-  petrochem: { name: "Нефтехимия и нефтепереработка", title: "Нефтехимия и нефтепереработка", commonFile: "petrochem.json", isCommon: true, questionCount: 98 },
-  chemical_industry: { name: "Химическая промышленность", title: "Химическая промышленность", commonFile: "chemical_industry.json", isCommon: true, questionCount: 69 },
-  compressor_stations: { name: "Компрессорные станции", title: "Компрессорные станции", commonFile: "compressor_stations.json", isCommon: true, questionCount: 57 },
-  ionizing_radiation: { name: "Источники ионизирующего излучения", title: "Источники ионизирующего излучения", commonFile: "ionizing_radiation.json", isCommon: true, questionCount: 50 },
-  gas_supply: { name: "Газоснабжение", title: "Газоснабжение", commonFile: "gas_supply.json", isCommon: true, questionCount: 101 },
+  mining: { name: "Горные и геологоразведочные работы", title: "Горные и геологоразведочные работы", commonFile: "mining.json", isCommon: true, questionCount: 20 },
+  solid_minerals: { name: "Переработка твердых полезных ископаемых", title: "Переработка твердых полезных ископаемых", commonFile: "solid_minerals.json", isCommon: true, questionCount: 20 },
+  tailings: { name: "Хвостовые и шламовые хозяйства", title: "Хвостовые и шламовые хозяйства", commonFile: "tailings.json", isCommon: true, questionCount: 20 },
+  blasting: { name: "Взрывные работы", title: "Взрывные работы", commonFile: "blasting.json", isCommon: true, questionCount: 20 },
+  lifting_mechanisms: { name: "Грузоподъемные механизмы", title: "Грузоподъемные механизмы", commonFile: "lifting_mechanisms.json", isCommon: true, questionCount: 20 },
+  pressure_equipment: { name: "Оборудование под давлением", title: "Оборудование под давлением", commonFile: "pressure_equipment.json", isCommon: true, questionCount: 20 },
+  metallurgy: { name: "Производство расплавов металлов", title: "Производство расплавов металлов", commonFile: "metallurgy.json", isCommon: true, questionCount: 20 },
+  petrochem: { name: "Нефтехимия и нефтепереработка", title: "Нефтехимия и нефтепереработка", commonFile: "petrochem.json", isCommon: true, questionCount: 20 },
+  chemical_industry: { name: "Химическая промышленность", title: "Химическая промышленность", commonFile: "chemical_industry.json", isCommon: true, questionCount: 20 },
+  compressor_stations: { name: "Компрессорные станции", title: "Компрессорные станции", commonFile: "compressor_stations.json", isCommon: true, questionCount: 20 },
+  ionizing_radiation: { name: "Источники ионизирующего излучения", title: "Источники ионизирующего излучения", commonFile: "ionizing_radiation.json", isCommon: true, questionCount: 20 },
+  gas_supply: { name: "Газоснабжение", title: "Газоснабжение", commonFile: "gas_supply.json", isCommon: true, questionCount: 20 },
 };
 
 // ══════════════════════════════════════════
@@ -200,10 +200,27 @@ function showTestSelection() {
 
   Object.keys(TEST_TYPES).forEach(key => {
     const t = TEST_TYPES[key];
-    const icon = key === 'biot' ? '🛡️' : 
-                 key === 'pb' ? '🏭' : 
-                 key === 'ptm' ? '🧯' : 
-                 key === 'electrical' ? '⚡' : key === 'slinger' ? '🪝' : '📋';
+    const icons = {
+      biot: '🦺',
+      pb: '🏭',
+      ptm: '🧯',
+      electrical: '⚡',
+      slinger: '🪝',
+      civil_protection: '🚨',
+      mining: '⛏️',
+      solid_minerals: '🪨',
+      tailings: '🌊',
+      blasting: '💥',
+      lifting_mechanisms: '🏗️',
+      pressure_equipment: '🧰',
+      metallurgy: '🔥',
+      petrochem: '🛢️',
+      chemical_industry: '⚗️',
+      compressor_stations: '🌀',
+      ionizing_radiation: '☢️',
+      gas_supply: '🔥'
+    };
+    const icon = icons[key] || '📋';
 
     html += `
       <div class="test-card" onclick="selectCategory('${key}')">
