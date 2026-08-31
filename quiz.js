@@ -54,7 +54,20 @@ const TEST_TYPES = {
     commonFile: "slinger.json",
     isCommon: true,
     questionCount: 20
-  }
+  },
+  civil_protection: { name: "Гражданская защита", title: "Гражданская защита", commonFile: "civil_protection.json", isCommon: true, questionCount: 20 },
+  mining: { name: "Горные и геологоразведочные работы", title: "Горные и геологоразведочные работы", commonFile: "mining.json", isCommon: true, questionCount: 100 },
+  solid_minerals: { name: "Переработка твердых полезных ископаемых", title: "Переработка твердых полезных ископаемых", commonFile: "solid_minerals.json", isCommon: true, questionCount: 96 },
+  tailings: { name: "Хвостовые и шламовые хозяйства", title: "Хвостовые и шламовые хозяйства", commonFile: "tailings.json", isCommon: true, questionCount: 100 },
+  blasting: { name: "Взрывные работы", title: "Взрывные работы", commonFile: "blasting.json", isCommon: true, questionCount: 100 },
+  lifting_mechanisms: { name: "Грузоподъемные механизмы", title: "Грузоподъемные механизмы", commonFile: "lifting_mechanisms.json", isCommon: true, questionCount: 99 },
+  pressure_equipment: { name: "Оборудование под давлением", title: "Оборудование под давлением", commonFile: "pressure_equipment.json", isCommon: true, questionCount: 115 },
+  metallurgy: { name: "Производство расплавов металлов", title: "Производство расплавов металлов", commonFile: "metallurgy.json", isCommon: true, questionCount: 100 },
+  petrochem: { name: "Нефтехимия и нефтепереработка", title: "Нефтехимия и нефтепереработка", commonFile: "petrochem.json", isCommon: true, questionCount: 98 },
+  chemical_industry: { name: "Химическая промышленность", title: "Химическая промышленность", commonFile: "chemical_industry.json", isCommon: true, questionCount: 69 },
+  compressor_stations: { name: "Компрессорные станции", title: "Компрессорные станции", commonFile: "compressor_stations.json", isCommon: true, questionCount: 57 },
+  ionizing_radiation: { name: "Источники ионизирующего излучения", title: "Источники ионизирующего излучения", commonFile: "ionizing_radiation.json", isCommon: true, questionCount: 50 },
+  gas_supply: { name: "Газоснабжение", title: "Газоснабжение", commonFile: "gas_supply.json", isCommon: true, questionCount: 101 },
 };
 
 // ══════════════════════════════════════════
@@ -190,7 +203,7 @@ function showTestSelection() {
     const icon = key === 'biot' ? '🛡️' : 
                  key === 'pb' ? '🏭' : 
                  key === 'ptm' ? '🧯' : 
-                 key === 'electrical' ? '⚡' : '🪝';
+                 key === 'electrical' ? '⚡' : key === 'slinger' ? '🪝' : '📋';
 
     html += `
       <div class="test-card" onclick="selectCategory('${key}')">
@@ -392,12 +405,13 @@ function renderResult() {
   document.getElementById('timer').style.display = 'none';
 
   let correct = 0;
+  let keyed = 0;
   QUESTIONS.forEach((q, i) => {
-    if (answers[i] === q.answer) correct++;
+    if (Number.isInteger(q.answer)) { keyed++; if (answers[i] === q.answer) correct++; }
   });
 
-  const pct = Math.round((correct / TOTAL) * 100);
-  const passed = pct >= PASS_PERCENT;
+  const pct = keyed ? Math.round((correct / keyed) * 100) : 0;
+  const passed = keyed > 0 && pct >= PASS_PERCENT;
   const categoryName = TEST_TYPES[currentTestType].isCommon 
     ? TEST_TYPES[currentTestType].name 
     : (currentCategory === 'itr' ? 'ИТР' : 'Рабочие');
@@ -408,9 +422,7 @@ function renderResult() {
     ? '🎉 Поздравляем! Тест успешно пройден!' 
     : '😔 Тест не пройден';
 
-  const resultSub = passed 
-    ? `Отличный результат! Вы набрали ${pct}%`
-    : `Набрано ${pct}%. Необходимо минимум ${PASS_PERCENT}% для сдачи.`;
+  const resultSub = keyed === 0 ? 'Ключи правильных ответов пока не загружены — добавим их позже.' : (passed ? `Отличный результат! Вы набрали ${pct}%` : `Набрано ${pct}%. Необходимо минимум ${PASS_PERCENT}% для сдачи.`);
 
   const reviewHTML = QUESTIONS.map((q, i) => {
     const userAns = answers[i];
@@ -420,9 +432,9 @@ function renderResult() {
         <div class="ri-answers">
           ${q.options.map((opt, j) => {
             let cls = '';
-            if (j === q.answer) cls = 'correct';
-            else if (j === userAns && userAns !== q.answer) cls = 'wrong';
-            return `<div class="ri-ans ${cls}">${letters[j]}. ${opt}${j === q.answer ? ' ✓' : j === userAns ? ' ✗' : ''}</div>`;
+            if (Number.isInteger(q.answer) && j === q.answer) cls = 'correct';
+            else if (Number.isInteger(q.answer) && j === userAns && userAns !== q.answer) cls = 'wrong';
+            return `<div class="ri-ans ${cls}">${letters[j]}. ${opt}${Number.isInteger(q.answer) && j === q.answer ? ' ✓' : Number.isInteger(q.answer) && j === userAns ? ' ✗' : ''}</div>`;
           }).join('')}
         </div>
       </div>`;
@@ -445,7 +457,7 @@ function renderResult() {
 
       <div class="result-stats">
         <div class="stat-pill"><div class="stat-num c">${correct}</div><div class="stat-lbl">Правильно</div></div>
-        <div class="stat-pill"><div class="stat-num w">${TOTAL - correct}</div><div class="stat-lbl">Неправильно</div></div>
+        <div class="stat-pill"><div class="stat-num w">${keyed ? keyed - correct : '—'}</div><div class="stat-lbl">Неправильно</div></div>
       </div>
 
       <div style="margin:30px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
