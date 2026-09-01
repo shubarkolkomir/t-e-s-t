@@ -61,13 +61,13 @@ const TEST_TYPES = {
   tailings: { name: "Хвостовые и шламовые хозяйства", title: "Хвостовые и шламовые хозяйства", commonFile: "tailings.json", isCommon: true, questionCount: 20 },
   blasting: { name: "Взрывные работы", title: "Взрывные работы", commonFile: "blasting.json", isCommon: true, questionCount: 20 },
   lifting_mechanisms: { name: "Грузоподъемные механизмы", title: "Грузоподъемные механизмы", commonFile: "lifting_mechanisms.json", isCommon: true, questionCount: 20 },
-  pressure_equipment: { name: "Оборудование под давлением", title: "Оборудование под давлением", commonFile: "pressure_equipment.json", isCommon: true, questionCount: 20 },
+  pressure_equipment: { name: "Оборудование под давлением", title: "Оборудование под давлением", commonFile: "pressure_equipment.json", isCommon: true, questionCount: 50 },
   metallurgy: { name: "Производство расплавов металлов", title: "Производство расплавов металлов", commonFile: "metallurgy.json", isCommon: true, questionCount: 20 },
   petrochem: { name: "Нефтехимия и нефтепереработка", title: "Нефтехимия и нефтепереработка", commonFile: "petrochem.json", isCommon: true, questionCount: 20 },
   chemical_industry: { name: "Химическая промышленность", title: "Химическая промышленность", commonFile: "chemical_industry.json", isCommon: true, questionCount: 20 },
   compressor_stations: { name: "Компрессорные станции", title: "Компрессорные станции", commonFile: "compressor_stations.json", isCommon: true, questionCount: 20 },
   ionizing_radiation: { name: "Источники ионизирующего излучения", title: "Источники ионизирующего излучения", commonFile: "ionizing_radiation.json", isCommon: true, questionCount: 20 },
-  gas_supply: { name: "Газоснабжение", title: "Газоснабжение", commonFile: "gas_supply.json", isCommon: true, questionCount: 20 },
+  gas_supply: { name: "Газоснабжение", title: "Газоснабжение", commonFile: "gas_supply.json", isCommon: true, questionCount: 50 },
 };
 
 // ══════════════════════════════════════════
@@ -205,10 +205,10 @@ function showTestSelection() {
       pb: '🏭',
       ptm: '🧯',
       electrical: '⚡',
-      slinger: '🪝',
+      slinger: '🏗️',
       civil_protection: '🚨',
       mining: '⛏️',
-      solid_minerals: '🪨',
+      solid_minerals: '⚙️',
       tailings: '🌊',
       blasting: '💥',
       lifting_mechanisms: '🏗️',
