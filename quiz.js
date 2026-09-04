@@ -537,18 +537,19 @@ showLoginScreen();
 const QUESTION_PRICE = 2000;
 const PAYMENT_CARD = '4400 4303 4394 1941';
 const QUESTION_PACKS = [
-  {id:'biot-worker', name:'БиОТ — для рабочих', file:'biot.json'},
-  {id:'biot-itr', name:'БиОТ — для ИТР', file:'biot_itr.json'},
-  {id:'pb-worker', name:'ПБ — для рабочих', file:'pb.json'},
-  {id:'pb-itr', name:'ПБ — для ИТР', file:'pb_itr.json'},
-  {id:'ptm-worker', name:'ПТМ — для рабочих', file:'ptm.json'},
-  {id:'ptm-itr', name:'ПТМ — для ИТР', file:'ptm_itr.json'},
-  {id:'electrical', name:'Электробез', file:'electrical.json'},
-  {id:'slinger', name:'Стропальщик', file:'slinger.json'}
+  {id:'biot-worker', name:'БиОТ — для рабочих', file:'biot.json', material:'materials/biot-worker.txt'},
+  {id:'biot-itr', name:'БиОТ — для ИТР', file:'biot_itr.json', material:'materials/biot-itr.txt'},
+  {id:'pb-worker', name:'ПБ — для рабочих', file:'pb.json', material:'materials/pb-worker.txt'},
+  {id:'pb-itr', name:'ПБ — для ИТР', file:'pb_itr.json', material:'materials/pb-itr.txt'},
+  {id:'ptm-worker', name:'ПТМ — для рабочих', file:'ptm.json', material:'materials/ptm-worker.txt'},
+  {id:'ptm-itr', name:'ПТМ — для ИТР', file:'ptm_itr.json', material:'materials/ptm-itr.txt'},
+  {id:'electrical', name:'Электробез', file:'electrical.json', material:'materials/electrical.txt'},
+  {id:'slinger', name:'Стропальщик', file:'slinger.json', material:'materials/slinger.txt'}
 ];
 
 let purchaseReceiptFile = null;
 let purchaseVerified = false;
+let verifiedPackIds = [];
 
 function showPurchaseScreen() {
   clearInterval(timerInterval);
@@ -556,58 +557,76 @@ function showPurchaseScreen() {
   document.getElementById('test-type').textContent = 'Получить вопросы';
   purchaseReceiptFile = null;
   purchaseVerified = false;
+  verifiedPackIds = [];
 
   const items = QUESTION_PACKS.map(p => `
     <label class="purchase-item" id="row-${p.id}">
       <input type="checkbox" class="purchase-check" value="${p.id}" onchange="updatePurchaseTotal()">
-      <div class="purchase-item-main">
-        <div class="purchase-item-title">${p.name}</div>
-        <div class="purchase-item-sub">Все вопросы из базы</div>
-      </div>
-      <div class="purchase-price">2 000 ₸</div>
+      <span class="purchase-checkmark" aria-hidden="true">✓</span>
+      <span class="purchase-item-main">
+        <span class="purchase-item-title">${p.name}</span>
+        <span class="purchase-item-sub">Вопросы + правильные ответы</span>
+      </span>
+      <span class="purchase-price">2 000 ₸</span>
     </label>`).join('');
 
   document.getElementById('app').innerHTML = `
-    <div class="selection-screen">
+    <div class="selection-screen purchase-screen">
       <div class="purchase-wrap">
         <div class="purchase-head">
+          <div class="purchase-kicker">База для подготовки</div>
           <h2>Получить вопросы</h2>
-          <p>барлық сурақтар · выберите один или несколько тестов</p>
+          <p>барлық сұрақтар</p>
         </div>
 
-        <div class="purchase-toolbar">
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-            <input id="selectAllPacks" type="checkbox" onchange="toggleAllPacks(this.checked)" style="width:20px;height:20px;accent-color:var(--orange)">
-            <strong>Выбрать все</strong>
-          </label>
-          <div class="purchase-total">Итого: <strong id="purchaseTotal">0 ₸</strong></div>
-        </div>
+        <section class="purchase-panel">
+          <div class="purchase-step-head">
+            <div><span class="step-badge">1</span><strong>Выберите нужные тесты</strong></div>
+            <label class="select-all-control">
+              <input id="selectAllPacks" type="checkbox" onchange="toggleAllPacks(this.checked)">
+              <span>Выбрать все</span>
+            </label>
+          </div>
+          <div class="purchase-list">${items}</div>
+          <div class="purchase-summary">
+            <span id="purchaseCount">Выбрано: 0</span>
+            <span>Итого: <strong id="purchaseTotal">0 ₸</strong></span>
+          </div>
+        </section>
 
-        <div class="purchase-list">${items}</div>
+        <section class="purchase-panel payment-box">
+          <div class="purchase-step-head">
+            <div><span class="step-badge">2</span><strong>Оплатите выбранные тесты</strong></div>
+          </div>
+          <div class="payment-grid">
+            <div>
+              <div class="payment-label">Номер карты</div>
+              <div class="card-number" id="paymentCard">${PAYMENT_CARD}</div>
+            </div>
+            <button class="copy-btn" type="button" onclick="copyPaymentCard()">Скопировать</button>
+          </div>
+          <div class="amount-callout">К оплате: <strong id="paymentAmount">0 ₸</strong></div>
+          <div class="purchase-note">Переведите сумму, указанную выше. После оплаты загрузите чек.</div>
+        </section>
 
-        <div class="payment-box">
-          <div style="font-weight:600;">Оплата переводом на карту</div>
-          <div class="card-number" id="paymentCard">${PAYMENT_CARD}</div>
-          <button class="copy-btn" onclick="copyPaymentCard()">Скопировать номер</button>
-          <div class="purchase-note">Переведите ровно сумму, указанную в «Итого», затем загрузите чек оплаты ниже.</div>
-        </div>
-
-        <div class="receipt-box">
-          <div style="font-weight:600;margin-bottom:12px;">Загрузить чек</div>
-          <label class="receipt-drop">
+        <section class="purchase-panel receipt-box">
+          <div class="purchase-step-head">
+            <div><span class="step-badge">3</span><strong>Загрузите чек оплаты</strong></div>
+          </div>
+          <label class="receipt-drop" id="receiptDrop">
             <input id="receiptInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="handleReceiptUpload(event)">
-            <div style="font-size:30px;margin-bottom:8px;">🧾</div>
-            <div><strong>Нажмите и выберите чек</strong></div>
-            <div style="font-size:12px;color:var(--muted);margin-top:5px;">JPG, PNG, WEBP или PDF</div>
+            <span class="receipt-icon">🧾</span>
+            <span class="receipt-title" id="receiptTitle">Выбрать чек</span>
+            <span class="receipt-help">JPG, PNG, WEBP или PDF · до 15 МБ</span>
           </label>
-          <div class="receipt-status" id="receiptStatus">Чек пока не загружен</div>
-          <div class="purchase-note">Проверка на сайте базовая: формат файла, целостность изображения/PDF и повторное использование этого же файла. Это не банковское подтверждение поступления денег.</div>
-        </div>
+          <div class="receipt-status" id="receiptStatus">После загрузки здесь появится статус проверки.</div>
+        </section>
 
         <div class="purchase-actions">
           <button class="btn btn-outline" onclick="showTestSelection()">← Назад</button>
-          <button class="btn btn-primary" id="verifyPurchaseBtn" onclick="verifyPurchaseReceipt()" disabled>Проверить чек</button>
+          <button class="btn btn-primary verify-payment-btn" id="verifyPurchaseBtn" onclick="verifyPurchaseReceipt()" disabled>Проверить чек и получить файлы</button>
         </div>
+
         <div id="downloadArea"></div>
       </div>
     </div>`;
@@ -617,17 +636,33 @@ function getSelectedPacks() {
   return Array.from(document.querySelectorAll('.purchase-check:checked')).map(el => el.value);
 }
 
+function formatMoney(value) {
+  return `${value.toLocaleString('ru-RU')} ₸`;
+}
+
 function updatePurchaseTotal() {
   const selected = getSelectedPacks();
-  document.getElementById('purchaseTotal').textContent = `${(selected.length * QUESTION_PRICE).toLocaleString('ru-RU')} ₸`;
+  const total = selected.length * QUESTION_PRICE;
+  const totalEl = document.getElementById('purchaseTotal');
+  const paymentAmount = document.getElementById('paymentAmount');
+  const count = document.getElementById('purchaseCount');
+  if (totalEl) totalEl.textContent = formatMoney(total);
+  if (paymentAmount) paymentAmount.textContent = formatMoney(total);
+  if (count) count.textContent = `Выбрано: ${selected.length}`;
+
   QUESTION_PACKS.forEach(p => {
     const row = document.getElementById(`row-${p.id}`);
     const checked = document.querySelector(`.purchase-check[value="${p.id}"]`)?.checked;
     if (row) row.classList.toggle('selected', !!checked);
   });
   const all = document.getElementById('selectAllPacks');
-  if (all) all.checked = selected.length === QUESTION_PACKS.length;
+  if (all) {
+    all.checked = selected.length === QUESTION_PACKS.length;
+    all.indeterminate = selected.length > 0 && selected.length < QUESTION_PACKS.length;
+  }
+
   purchaseVerified = false;
+  verifiedPackIds = [];
   const dl = document.getElementById('downloadArea');
   if (dl) dl.innerHTML = '';
   updateVerifyButton();
@@ -639,11 +674,17 @@ function toggleAllPacks(checked) {
 }
 
 async function copyPaymentCard() {
+  const raw = PAYMENT_CARD.replace(/\s/g,'');
   try {
-    await navigator.clipboard.writeText(PAYMENT_CARD.replace(/\s/g,''));
-    alert('Номер карты скопирован');
+    await navigator.clipboard.writeText(raw);
+    const btn = document.querySelector('.copy-btn');
+    if (btn) {
+      const old = btn.textContent;
+      btn.textContent = 'Скопировано ✓';
+      setTimeout(() => btn.textContent = old, 1400);
+    }
   } catch (_) {
-    alert(PAYMENT_CARD);
+    window.prompt('Скопируйте номер карты:', raw);
   }
 }
 
@@ -656,19 +697,30 @@ async function handleReceiptUpload(event) {
   const file = event.target.files?.[0];
   purchaseReceiptFile = null;
   purchaseVerified = false;
-  document.getElementById('downloadArea').innerHTML = '';
+  verifiedPackIds = [];
+  const downloadArea = document.getElementById('downloadArea');
+  if (downloadArea) downloadArea.innerHTML = '';
   const status = document.getElementById('receiptStatus');
-  if (!file) { status.textContent = 'Чек пока не загружен'; updateVerifyButton(); return; }
+  const title = document.getElementById('receiptTitle');
+  const drop = document.getElementById('receiptDrop');
+
+  if (!file) {
+    if (status) status.textContent = 'После загрузки здесь появится статус проверки.';
+    if (title) title.textContent = 'Выбрать чек';
+    if (drop) drop.classList.remove('has-file','file-error');
+    updateVerifyButton();
+    return;
+  }
 
   const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
   if (!allowed.includes(file.type)) {
-    status.innerHTML = '<span style="color:var(--wrong)">Формат файла не поддерживается.</span>';
+    setReceiptError('Формат файла не поддерживается. Выберите JPG, PNG, WEBP или PDF.');
     event.target.value = '';
     updateVerifyButton();
     return;
   }
-  if (file.size < 15000 || file.size > 15 * 1024 * 1024) {
-    status.innerHTML = '<span style="color:var(--wrong)">Файл выглядит некорректно по размеру. Загрузите оригинальный чек.</span>';
+  if (file.size < 5000 || file.size > 15 * 1024 * 1024) {
+    setReceiptError('Размер файла выглядит некорректно. Загрузите оригинальный чек до 15 МБ.');
     event.target.value = '';
     updateVerifyButton();
     return;
@@ -677,7 +729,15 @@ async function handleReceiptUpload(event) {
   if (file.type.startsWith('image/')) {
     const ok = await validateImageFile(file);
     if (!ok) {
-      status.innerHTML = '<span style="color:var(--wrong)">Не удалось прочитать изображение чека.</span>';
+      setReceiptError('Изображение не удалось открыть. Выберите другой файл чека.');
+      event.target.value = '';
+      updateVerifyButton();
+      return;
+    }
+  } else {
+    const ok = await validatePdfFile(file);
+    if (!ok) {
+      setReceiptError('PDF не удалось прочитать. Выберите оригинальный файл чека.');
       event.target.value = '';
       updateVerifyButton();
       return;
@@ -685,8 +745,19 @@ async function handleReceiptUpload(event) {
   }
 
   purchaseReceiptFile = file;
-  status.innerHTML = `<span style="color:var(--correct)">Файл принят:</span> ${escapeHtml(file.name)}`;
+  if (title) title.textContent = file.name;
+  if (status) status.innerHTML = `<span class="status-ok">✓ Файл загружен.</span> Нажмите «Проверить чек и получить файлы».`;
+  if (drop) { drop.classList.add('has-file'); drop.classList.remove('file-error'); }
   updateVerifyButton();
+}
+
+function setReceiptError(message) {
+  const status = document.getElementById('receiptStatus');
+  const title = document.getElementById('receiptTitle');
+  const drop = document.getElementById('receiptDrop');
+  if (status) status.innerHTML = `<span class="status-error">${escapeHtml(message)}</span>`;
+  if (title) title.textContent = 'Выбрать другой чек';
+  if (drop) { drop.classList.add('file-error'); drop.classList.remove('has-file'); }
 }
 
 function validateImageFile(file) {
@@ -694,7 +765,7 @@ function validateImageFile(file) {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      const ok = img.naturalWidth >= 500 && img.naturalHeight >= 500;
+      const ok = img.naturalWidth >= 250 && img.naturalHeight >= 250;
       URL.revokeObjectURL(url);
       resolve(ok);
     };
@@ -703,10 +774,11 @@ function validateImageFile(file) {
   });
 }
 
-async function fileHash(file) {
-  const buf = await file.arrayBuffer();
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+async function validatePdfFile(file) {
+  try {
+    const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+    return String.fromCharCode(...head) === '%PDF-';
+  } catch (_) { return false; }
 }
 
 async function verifyPurchaseReceipt() {
@@ -715,26 +787,26 @@ async function verifyPurchaseReceipt() {
   if (!purchaseReceiptFile) return alert('Загрузите чек оплаты.');
 
   const btn = document.getElementById('verifyPurchaseBtn');
-  btn.disabled = true;
-  btn.textContent = 'Проверяем…';
   const status = document.getElementById('receiptStatus');
+  btn.disabled = true;
+  btn.textContent = 'Проверяем файл…';
 
   try {
-    // Базовая локальная проверка. Без API банка нельзя подтвердить сам факт поступления денег.
-    if (purchaseReceiptFile.size < 15000) throw new Error('Файл слишком маленький');
+    // На статическом GitHub Pages без банковского API здесь возможно проверить только сам файл.
+    // После успешной проверки файла доступ открывается к заранее подготовленным материалам.
+    if (purchaseReceiptFile.size < 5000) throw new Error('Файл чека слишком маленький.');
 
-    // Не блокируем повторную загрузку того же файла на устройстве: это мешало тестировать
-    // страницу и приводило к ощущению, что кнопка «Проверить чек» ничего не делает.
     purchaseVerified = true;
-    status.innerHTML = '<span style="color:var(--correct)">✓ Чек принят. Начинаю скачивание выбранных вопросов…</span>';
+    verifiedPackIds = [...selected];
+    if (status) status.innerHTML = '<span class="status-ok">✓ Чек принят. Материалы готовы к скачиванию.</span>';
     renderDownloads(selected);
-
-    // Сразу запускаем скачивание всех выбранных наборов по очереди.
-    await downloadSelectedPacks(selected);
+    document.getElementById('downloadArea')?.scrollIntoView({behavior:'smooth', block:'start'});
   } catch (e) {
-    status.innerHTML = `<span style="color:var(--wrong)">Не удалось проверить чек: ${escapeHtml(e.message || 'ошибка')}</span>`;
+    purchaseVerified = false;
+    verifiedPackIds = [];
+    if (status) status.innerHTML = `<span class="status-error">Не удалось обработать чек: ${escapeHtml(e.message || 'ошибка')}</span>`;
   } finally {
-    btn.textContent = 'Проверить чек';
+    btn.textContent = 'Проверить чек и получить файлы';
     btn.disabled = false;
   }
 }
@@ -743,53 +815,116 @@ function escapeHtml(value='') {
   return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 }
 
-
-async function downloadSelectedPacks(selectedIds) {
-  for (const id of selectedIds) {
-    await downloadQuestionPack(id);
-    // Небольшая пауза, чтобы браузер успевал обработать несколько скачиваний подряд.
-    await new Promise(resolve => setTimeout(resolve, 250));
-  }
-}
-
 function renderDownloads(selectedIds) {
   const packs = QUESTION_PACKS.filter(p => selectedIds.includes(p.id));
-  document.getElementById('downloadArea').innerHTML = `
-    <div class="payment-box" style="margin-top:20px;">
-      <div style="font-family:'Unbounded',sans-serif;font-size:16px;">Ваши материалы</div>
-      <div class="download-list">
-        ${packs.map(p => `<div class="download-row"><span>${p.name}</span><button class="btn btn-primary" onclick="downloadQuestionPack('${p.id}')">Скачать</button></div>`).join('')}
+  const area = document.getElementById('downloadArea');
+  if (!area) return;
+  area.innerHTML = `
+    <section class="purchase-success">
+      <div class="success-icon">✓</div>
+      <div class="success-copy">
+        <h3>Материалы готовы</h3>
+        <p>Ниже находятся именно те тесты, которые вы выбрали. Каждый файл содержит все вопросы и правильные ответы.</p>
       </div>
-    </div>`;
+      <button class="btn btn-primary download-all-btn" onclick="downloadSelectedAsZip()">Скачать все одним ZIP</button>
+    </section>
+    <div class="download-list">
+      ${packs.map(p => `
+        <div class="download-row">
+          <div class="download-row-copy">
+            <strong>${p.name}</strong>
+            <span>TXT · вопросы и правильные ответы</span>
+          </div>
+          <a class="btn btn-outline material-link" href="${p.material}" download>Скачать</a>
+        </div>`).join('')}
+    </div>
+    <div class="delivery-note">Если автоматическая загрузка ZIP не сработает, используйте отдельную кнопку «Скачать» напротив каждого теста — это прямые файлы на сайте.</div>`;
 }
 
-async function downloadQuestionPack(id) {
-  if (!purchaseVerified) return alert('Сначала пройдите проверку чека.');
-  const pack = QUESTION_PACKS.find(p => p.id === id);
-  if (!pack) return;
+async function downloadSelectedAsZip() {
+  if (!purchaseVerified || !verifiedPackIds.length) return alert('Сначала пройдите проверку чека.');
+  const btn = document.querySelector('.download-all-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Готовим ZIP…'; }
   try {
-    const res = await fetch('./' + pack.file);
-    if (!res.ok) throw new Error('Не удалось загрузить базу');
-    const questions = await res.json();
-    const lines = [`${pack.name}`, `Всего вопросов: ${questions.length}`, ''];
-    questions.forEach((q, i) => {
-      lines.push(`${i + 1}. ${q.text}`);
-      (q.options || []).forEach((opt, idx) => lines.push(`   ${String.fromCharCode(65+idx)}) ${opt}`));
-      if (Number.isInteger(q.answer) && q.options && q.options[q.answer] !== undefined) {
-        lines.push(`   Правильный ответ: ${String.fromCharCode(65+q.answer)}) ${q.options[q.answer]}`);
-      }
-      lines.push('');
-    });
-    const blob = new Blob(['\ufeff' + lines.join('\n')], {type:'text/plain;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = pack.name.replace(/[\\/:*?"<>|—]+/g,'_').replace(/\s+/g,'_') + '_вопросы.txt';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const packs = QUESTION_PACKS.filter(p => verifiedPackIds.includes(p.id));
+    const files = [];
+    for (const p of packs) {
+      const res = await fetch('./' + p.material, {cache:'no-store'});
+      if (!res.ok) throw new Error(`Не удалось загрузить ${p.name}`);
+      files.push({name: safeFileName(p.name) + '.txt', data: new Uint8Array(await res.arrayBuffer())});
+    }
+    const zipBytes = makeStoreZip(files);
+    const blob = new Blob([zipBytes], {type:'application/zip'});
+    saveBlob(blob, `Вопросы_${packs.length}_тестов.zip`);
   } catch (e) {
-    alert('Ошибка скачивания: ' + (e.message || e));
+    alert('Не удалось собрать ZIP. Скачайте файлы по отдельности кнопками ниже.\n' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Скачать все одним ZIP'; }
   }
+}
+
+function safeFileName(name) {
+  return name.replace(/[\\/:*?"<>|—]+/g,'_').replace(/\s+/g,'_');
+}
+
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+// Минимальный ZIP без сжатия (STORE), чтобы не зависеть от сторонних библиотек/CDN.
+function makeStoreZip(files) {
+  const encoder = new TextEncoder();
+  const locals = [];
+  const centrals = [];
+  let offset = 0;
+
+  const u16 = n => new Uint8Array([n & 255, (n >>> 8) & 255]);
+  const u32 = n => new Uint8Array([n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]);
+  const concat = parts => {
+    const size = parts.reduce((s,p)=>s+p.length,0);
+    const out = new Uint8Array(size); let pos=0;
+    parts.forEach(p=>{out.set(p,pos);pos+=p.length;});
+    return out;
+  };
+
+  for (const file of files) {
+    const name = encoder.encode(file.name);
+    const data = file.data;
+    const crc = crc32(data) >>> 0;
+    const local = concat([
+      u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(0), u16(0),
+      u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), name, data
+    ]);
+    locals.push(local);
+    const central = concat([
+      u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0),
+      u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), u16(0),
+      u16(0), u16(0), u32(0), u32(offset), name
+    ]);
+    centrals.push(central);
+    offset += local.length;
+  }
+
+  const centralData = concat(centrals);
+  const end = concat([
+    u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length),
+    u32(centralData.length), u32(offset), u16(0)
+  ]);
+  return concat([...locals, centralData, end]);
+}
+
+function crc32(bytes) {
+  let c = 0xffffffff;
+  for (let i=0; i<bytes.length; i++) {
+    c ^= bytes[i];
+    for (let k=0; k<8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
+  }
+  return (c ^ 0xffffffff) >>> 0;
 }
