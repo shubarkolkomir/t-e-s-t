@@ -18,7 +18,7 @@ const QUIZ_COUNT = {
     pb:   100,
     ptm:  20
   },
-  electrical: 56,
+  electrical: 61,
   slinger: 20
 };
 
@@ -55,19 +55,6 @@ const TEST_TYPES = {
     isCommon: true,
     questionCount: 20
   },
-  civil_protection: { name: "Гражданская защита", title: "Гражданская защита", commonFile: "civil_protection.json", isCommon: true, questionCount: 20 },
-  mining: { name: "Горные и геологоразведочные работы", title: "Горные и геологоразведочные работы", commonFile: "mining.json", isCommon: true, questionCount: 20 },
-  solid_minerals: { name: "Переработка твердых полезных ископаемых", title: "Переработка твердых полезных ископаемых", commonFile: "solid_minerals.json", isCommon: true, questionCount: 20 },
-  tailings: { name: "Хвостовые и шламовые хозяйства", title: "Хвостовые и шламовые хозяйства", commonFile: "tailings.json", isCommon: true, questionCount: 20 },
-  blasting: { name: "Взрывные работы", title: "Взрывные работы", commonFile: "blasting.json", isCommon: true, questionCount: 20 },
-  lifting_mechanisms: { name: "Грузоподъемные механизмы", title: "Грузоподъемные механизмы", commonFile: "lifting_mechanisms.json", isCommon: true, questionCount: 20 },
-  pressure_equipment: { name: "Оборудование под давлением", title: "Оборудование под давлением", commonFile: "pressure_equipment.json", isCommon: true, questionCount: 50 },
-  metallurgy: { name: "Производство расплавов металлов", title: "Производство расплавов металлов", commonFile: "metallurgy.json", isCommon: true, questionCount: 20 },
-  petrochem: { name: "Нефтехимия и нефтепереработка", title: "Нефтехимия и нефтепереработка", commonFile: "petrochem.json", isCommon: true, questionCount: 20 },
-  chemical_industry: { name: "Химическая промышленность", title: "Химическая промышленность", commonFile: "chemical_industry.json", isCommon: true, questionCount: 20 },
-  compressor_stations: { name: "Компрессорные станции", title: "Компрессорные станции", commonFile: "compressor_stations.json", isCommon: true, questionCount: 20 },
-  ionizing_radiation: { name: "Источники ионизирующего излучения", title: "Источники ионизирующего излучения", commonFile: "ionizing_radiation.json", isCommon: true, questionCount: 20 },
-  gas_supply: { name: "Газоснабжение", title: "Газоснабжение", commonFile: "gas_supply.json", isCommon: true, questionCount: 50 },
 };
 
 // ══════════════════════════════════════════
@@ -206,19 +193,6 @@ function showTestSelection() {
       ptm: '🧯',
       electrical: '⚡',
       slinger: '🏗️',
-      civil_protection: '🚨',
-      mining: '⛏️',
-      solid_minerals: '⚙️',
-      tailings: '🌊',
-      blasting: '💥',
-      lifting_mechanisms: '🏗️',
-      pressure_equipment: '🧰',
-      metallurgy: '🔥',
-      petrochem: '🛢️',
-      chemical_industry: '⚗️',
-      compressor_stations: '🌀',
-      ionizing_radiation: '☢️',
-      gas_supply: '🔥'
     };
     const icon = icons[key] || '📋';
 
@@ -231,7 +205,15 @@ function showTestSelection() {
     `;
   });
 
-  html += `</div></div>`;
+  html += `
+        <div class="test-card" onclick="showPurchaseScreen()">
+          <div class="test-icon">📥</div>
+          <h3>Получить вопросы</h3>
+          <p style="font-size:12px;">барлық сурақтар</p>
+          <small style="color:var(--orange);margin-top:8px;">2 000 ₸ / тест</small>
+        </div>
+      </div>
+    </div>`;
   document.getElementById('app').innerHTML = html;
 }
 
@@ -547,3 +529,262 @@ window.logout = logout;
 //   СТАРТ
 // ══════════════════════════════════════════
 showLoginScreen();
+
+
+// ══════════════════════════════════════════
+//   ПОЛУЧИТЬ ВОПРОСЫ / ОПЛАТА
+// ══════════════════════════════════════════
+const QUESTION_PRICE = 2000;
+const PAYMENT_CARD = '4400 4303 4394 1941';
+const QUESTION_PACKS = [
+  {id:'biot-worker', name:'БиОТ — для рабочих', file:'biot.json'},
+  {id:'biot-itr', name:'БиОТ — для ИТР', file:'biot_itr.json'},
+  {id:'pb-worker', name:'ПБ — для рабочих', file:'pb.json'},
+  {id:'pb-itr', name:'ПБ — для ИТР', file:'pb_itr.json'},
+  {id:'ptm-worker', name:'ПТМ — для рабочих', file:'ptm.json'},
+  {id:'ptm-itr', name:'ПТМ — для ИТР', file:'ptm_itr.json'},
+  {id:'electrical', name:'Электробез', file:'electrical.json'},
+  {id:'slinger', name:'Стропальщик', file:'slinger.json'}
+];
+
+let purchaseReceiptFile = null;
+let purchaseVerified = false;
+
+function showPurchaseScreen() {
+  clearInterval(timerInterval);
+  document.getElementById('timer').style.display = 'none';
+  document.getElementById('test-type').textContent = 'Получить вопросы';
+  purchaseReceiptFile = null;
+  purchaseVerified = false;
+
+  const items = QUESTION_PACKS.map(p => `
+    <label class="purchase-item" id="row-${p.id}">
+      <input type="checkbox" class="purchase-check" value="${p.id}" onchange="updatePurchaseTotal()">
+      <div class="purchase-item-main">
+        <div class="purchase-item-title">${p.name}</div>
+        <div class="purchase-item-sub">Все вопросы из базы</div>
+      </div>
+      <div class="purchase-price">2 000 ₸</div>
+    </label>`).join('');
+
+  document.getElementById('app').innerHTML = `
+    <div class="selection-screen">
+      <div class="purchase-wrap">
+        <div class="purchase-head">
+          <h2>Получить вопросы</h2>
+          <p>барлық сурақтар · выберите один или несколько тестов</p>
+        </div>
+
+        <div class="purchase-toolbar">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input id="selectAllPacks" type="checkbox" onchange="toggleAllPacks(this.checked)" style="width:20px;height:20px;accent-color:var(--orange)">
+            <strong>Выбрать все</strong>
+          </label>
+          <div class="purchase-total">Итого: <strong id="purchaseTotal">0 ₸</strong></div>
+        </div>
+
+        <div class="purchase-list">${items}</div>
+
+        <div class="payment-box">
+          <div style="font-weight:600;">Оплата переводом на карту</div>
+          <div class="card-number" id="paymentCard">${PAYMENT_CARD}</div>
+          <button class="copy-btn" onclick="copyPaymentCard()">Скопировать номер</button>
+          <div class="purchase-note">Переведите ровно сумму, указанную в «Итого», затем загрузите чек оплаты ниже.</div>
+        </div>
+
+        <div class="receipt-box">
+          <div style="font-weight:600;margin-bottom:12px;">Загрузить чек</div>
+          <label class="receipt-drop">
+            <input id="receiptInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="handleReceiptUpload(event)">
+            <div style="font-size:30px;margin-bottom:8px;">🧾</div>
+            <div><strong>Нажмите и выберите чек</strong></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:5px;">JPG, PNG, WEBP или PDF</div>
+          </label>
+          <div class="receipt-status" id="receiptStatus">Чек пока не загружен</div>
+          <div class="purchase-note">Проверка на сайте базовая: формат файла, целостность изображения/PDF и повторное использование этого же файла. Это не банковское подтверждение поступления денег.</div>
+        </div>
+
+        <div class="purchase-actions">
+          <button class="btn btn-outline" onclick="showTestSelection()">← Назад</button>
+          <button class="btn btn-primary" id="verifyPurchaseBtn" onclick="verifyPurchaseReceipt()" disabled>Проверить чек</button>
+        </div>
+        <div id="downloadArea"></div>
+      </div>
+    </div>`;
+}
+
+function getSelectedPacks() {
+  return Array.from(document.querySelectorAll('.purchase-check:checked')).map(el => el.value);
+}
+
+function updatePurchaseTotal() {
+  const selected = getSelectedPacks();
+  document.getElementById('purchaseTotal').textContent = `${(selected.length * QUESTION_PRICE).toLocaleString('ru-RU')} ₸`;
+  QUESTION_PACKS.forEach(p => {
+    const row = document.getElementById(`row-${p.id}`);
+    const checked = document.querySelector(`.purchase-check[value="${p.id}"]`)?.checked;
+    if (row) row.classList.toggle('selected', !!checked);
+  });
+  const all = document.getElementById('selectAllPacks');
+  if (all) all.checked = selected.length === QUESTION_PACKS.length;
+  purchaseVerified = false;
+  const dl = document.getElementById('downloadArea');
+  if (dl) dl.innerHTML = '';
+  updateVerifyButton();
+}
+
+function toggleAllPacks(checked) {
+  document.querySelectorAll('.purchase-check').forEach(el => el.checked = checked);
+  updatePurchaseTotal();
+}
+
+async function copyPaymentCard() {
+  try {
+    await navigator.clipboard.writeText(PAYMENT_CARD.replace(/\s/g,''));
+    alert('Номер карты скопирован');
+  } catch (_) {
+    alert(PAYMENT_CARD);
+  }
+}
+
+function updateVerifyButton() {
+  const btn = document.getElementById('verifyPurchaseBtn');
+  if (btn) btn.disabled = !(getSelectedPacks().length && purchaseReceiptFile);
+}
+
+async function handleReceiptUpload(event) {
+  const file = event.target.files?.[0];
+  purchaseReceiptFile = null;
+  purchaseVerified = false;
+  document.getElementById('downloadArea').innerHTML = '';
+  const status = document.getElementById('receiptStatus');
+  if (!file) { status.textContent = 'Чек пока не загружен'; updateVerifyButton(); return; }
+
+  const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
+  if (!allowed.includes(file.type)) {
+    status.innerHTML = '<span style="color:var(--wrong)">Формат файла не поддерживается.</span>';
+    event.target.value = '';
+    updateVerifyButton();
+    return;
+  }
+  if (file.size < 15000 || file.size > 15 * 1024 * 1024) {
+    status.innerHTML = '<span style="color:var(--wrong)">Файл выглядит некорректно по размеру. Загрузите оригинальный чек.</span>';
+    event.target.value = '';
+    updateVerifyButton();
+    return;
+  }
+
+  if (file.type.startsWith('image/')) {
+    const ok = await validateImageFile(file);
+    if (!ok) {
+      status.innerHTML = '<span style="color:var(--wrong)">Не удалось прочитать изображение чека.</span>';
+      event.target.value = '';
+      updateVerifyButton();
+      return;
+    }
+  }
+
+  purchaseReceiptFile = file;
+  status.innerHTML = `<span style="color:var(--correct)">Файл принят:</span> ${escapeHtml(file.name)}`;
+  updateVerifyButton();
+}
+
+function validateImageFile(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const ok = img.naturalWidth >= 500 && img.naturalHeight >= 500;
+      URL.revokeObjectURL(url);
+      resolve(ok);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
+    img.src = url;
+  });
+}
+
+async function fileHash(file) {
+  const buf = await file.arrayBuffer();
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function verifyPurchaseReceipt() {
+  const selected = getSelectedPacks();
+  if (!selected.length) return alert('Выберите хотя бы один тест.');
+  if (!purchaseReceiptFile) return alert('Загрузите чек оплаты.');
+
+  const btn = document.getElementById('verifyPurchaseBtn');
+  btn.disabled = true;
+  btn.textContent = 'Проверяем…';
+  const status = document.getElementById('receiptStatus');
+
+  try {
+    const hash = await fileHash(purchaseReceiptFile);
+    const used = JSON.parse(localStorage.getItem('usedReceiptHashes') || '[]');
+    if (used.includes(hash)) {
+      status.innerHTML = '<span style="color:var(--wrong)">Этот файл чека уже использовался на этом устройстве.</span>';
+      return;
+    }
+
+    // Базовая локальная проверка. Без API банка нельзя подтвердить сам факт поступления денег.
+    if (purchaseReceiptFile.size < 15000) throw new Error('Файл слишком маленький');
+
+    used.push(hash);
+    localStorage.setItem('usedReceiptHashes', JSON.stringify(used.slice(-100)));
+    purchaseVerified = true;
+    status.innerHTML = '<span style="color:var(--correct)">✓ Базовая проверка пройдена. Можно скачать выбранные вопросы.</span>';
+    renderDownloads(selected);
+  } catch (e) {
+    status.innerHTML = `<span style="color:var(--wrong)">Не удалось проверить чек: ${escapeHtml(e.message || 'ошибка')}</span>`;
+  } finally {
+    btn.textContent = 'Проверить чек';
+    btn.disabled = false;
+  }
+}
+
+function escapeHtml(value='') {
+  return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+
+function renderDownloads(selectedIds) {
+  const packs = QUESTION_PACKS.filter(p => selectedIds.includes(p.id));
+  document.getElementById('downloadArea').innerHTML = `
+    <div class="payment-box" style="margin-top:20px;">
+      <div style="font-family:'Unbounded',sans-serif;font-size:16px;">Ваши материалы</div>
+      <div class="download-list">
+        ${packs.map(p => `<div class="download-row"><span>${p.name}</span><button class="btn btn-primary" onclick="downloadQuestionPack('${p.id}')">Скачать</button></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+async function downloadQuestionPack(id) {
+  if (!purchaseVerified) return alert('Сначала пройдите проверку чека.');
+  const pack = QUESTION_PACKS.find(p => p.id === id);
+  if (!pack) return;
+  try {
+    const res = await fetch('./' + pack.file);
+    if (!res.ok) throw new Error('Не удалось загрузить базу');
+    const questions = await res.json();
+    const lines = [`${pack.name}`, `Всего вопросов: ${questions.length}`, ''];
+    questions.forEach((q, i) => {
+      lines.push(`${i + 1}. ${q.text}`);
+      (q.options || []).forEach((opt, idx) => lines.push(`   ${String.fromCharCode(65+idx)}) ${opt}`));
+      if (Number.isInteger(q.answer) && q.options && q.options[q.answer] !== undefined) {
+        lines.push(`   Правильный ответ: ${String.fromCharCode(65+q.answer)}) ${q.options[q.answer]}`);
+      }
+      lines.push('');
+    });
+    const blob = new Blob(['\ufeff' + lines.join('\n')], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = pack.name.replace(/[\\/:*?"<>|—]+/g,'_').replace(/\s+/g,'_') + '_вопросы.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (e) {
+    alert('Ошибка скачивания: ' + (e.message || e));
+  }
+}
