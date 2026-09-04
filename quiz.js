@@ -537,14 +537,14 @@ showLoginScreen();
 const QUESTION_PRICE = 2000;
 const PAYMENT_CARD = '4400 4303 4394 1941';
 const QUESTION_PACKS = [
-  {id:'biot-worker', name:'БиОТ — для рабочих', file:'biot.json', material:'materials/biot-worker.txt'},
-  {id:'biot-itr', name:'БиОТ — для ИТР', file:'biot_itr.json', material:'materials/biot-itr.txt'},
-  {id:'pb-worker', name:'ПБ — для рабочих', file:'pb.json', material:'materials/pb-worker.txt'},
-  {id:'pb-itr', name:'ПБ — для ИТР', file:'pb_itr.json', material:'materials/pb-itr.txt'},
-  {id:'ptm-worker', name:'ПТМ — для рабочих', file:'ptm.json', material:'materials/ptm-worker.txt'},
-  {id:'ptm-itr', name:'ПТМ — для ИТР', file:'ptm_itr.json', material:'materials/ptm-itr.txt'},
-  {id:'electrical', name:'Электробез', file:'electrical.json', material:'materials/electrical.txt'},
-  {id:'slinger', name:'Стропальщик', file:'slinger.json', material:'materials/slinger.txt'}
+  {id:'biot-worker', name:'БиОТ — для рабочих', file:'biot.json', material:'materials/biot-worker.pdf'},
+  {id:'biot-itr', name:'БиОТ — для ИТР', file:'biot_itr.json', material:'materials/biot-itr.pdf'},
+  {id:'pb-worker', name:'ПБ — для рабочих', file:'pb.json', material:'materials/pb-worker.pdf'},
+  {id:'pb-itr', name:'ПБ — для ИТР', file:'pb_itr.json', material:'materials/pb-itr.pdf'},
+  {id:'ptm-worker', name:'ПТМ — для рабочих', file:'ptm.json', material:'materials/ptm-worker.pdf'},
+  {id:'ptm-itr', name:'ПТМ — для ИТР', file:'ptm_itr.json', material:'materials/ptm-itr.pdf'},
+  {id:'electrical', name:'Электробез', file:'electrical.json', material:'materials/electrical.pdf'},
+  {id:'slinger', name:'Стропальщик', file:'slinger.json', material:'materials/slinger.pdf'}
 ];
 
 let purchaseReceiptFile = null;
@@ -833,7 +833,7 @@ function renderDownloads(selectedIds) {
         <div class="download-row">
           <div class="download-row-copy">
             <strong>${p.name}</strong>
-            <span>TXT · вопросы и правильные ответы</span>
+            <span>PDF · вопросы и правильные ответы</span>
           </div>
           <a class="btn btn-outline material-link" href="${p.material}" download>Скачать</a>
         </div>`).join('')}
@@ -851,11 +851,11 @@ async function downloadSelectedAsZip() {
     for (const p of packs) {
       const res = await fetch('./' + p.material, {cache:'no-store'});
       if (!res.ok) throw new Error(`Не удалось загрузить ${p.name}`);
-      files.push({name: safeFileName(p.name) + '.txt', data: new Uint8Array(await res.arrayBuffer())});
+      files.push({name: safeFileName(p.name) + '.pdf', data: new Uint8Array(await res.arrayBuffer())});
     }
     const zipBytes = makeStoreZip(files);
     const blob = new Blob([zipBytes], {type:'application/zip'});
-    saveBlob(blob, `Вопросы_${packs.length}_тестов.zip`);
+    saveBlob(blob, `Вопросы_${packs.length}_тестов_PDF.zip`);
   } catch (e) {
     alert('Не удалось собрать ZIP. Скачайте файлы по отдельности кнопками ниже.\n' + (e.message || e));
   } finally {
