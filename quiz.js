@@ -537,14 +537,14 @@ showLoginScreen();
 const QUESTION_PRICE = 2000;
 const PAYMENT_CARD = '4400 4303 4394 1941';
 const QUESTION_PACKS = [
-  {id:'biot-worker', name:'БиОТ — для рабочих', file:'biot.json', material:'materials/biot-worker.pdf'},
-  {id:'biot-itr', name:'БиОТ — для ИТР', file:'biot_itr.json', material:'materials/biot-itr.pdf'},
-  {id:'pb-worker', name:'ПБ — для рабочих', file:'pb.json', material:'materials/pb-worker.pdf'},
-  {id:'pb-itr', name:'ПБ — для ИТР', file:'pb_itr.json', material:'materials/pb-itr.pdf'},
-  {id:'ptm-worker', name:'ПТМ — для рабочих', file:'ptm.json', material:'materials/ptm-worker.pdf'},
-  {id:'ptm-itr', name:'ПТМ — для ИТР', file:'ptm_itr.json', material:'materials/ptm-itr.pdf'},
-  {id:'electrical', name:'Электробез', file:'electrical.json', material:'materials/electrical.pdf'},
-  {id:'slinger', name:'Стропальщик', file:'slinger.json', material:'materials/slinger.pdf'}
+  {id:'biot-worker', name:'БиОТ — для рабочих', file:'biot.json', material:'biot-worker.pdf'},
+  {id:'biot-itr', name:'БиОТ — для ИТР', file:'biot_itr.json', material:'biot-itr.pdf'},
+  {id:'pb-worker', name:'ПБ — для рабочих', file:'pb.json', material:'pb-worker.pdf'},
+  {id:'pb-itr', name:'ПБ — для ИТР', file:'pb_itr.json', material:'pb-itr.pdf'},
+  {id:'ptm-worker', name:'ПТМ — для рабочих', file:'ptm.json', material:'ptm-worker.pdf'},
+  {id:'ptm-itr', name:'ПТМ — для ИТР', file:'ptm_itr.json', material:'ptm-itr.pdf'},
+  {id:'electrical', name:'Электробез', file:'electrical.json', material:'electrical.pdf'},
+  {id:'slinger', name:'Стропальщик', file:'slinger.json', material:'slinger.pdf'}
 ];
 
 let purchaseReceiptFile = null;
@@ -835,10 +835,30 @@ function renderDownloads(selectedIds) {
             <strong>${p.name}</strong>
             <span>PDF · вопросы и правильные ответы</span>
           </div>
-          <a class="btn btn-outline material-link" href="${p.material}" download>Скачать</a>
+          <button class="btn btn-outline material-link" type="button" onclick="downloadMaterial('${p.id}')">Скачать PDF</button>
         </div>`).join('')}
     </div>
     <div class="delivery-note">Если автоматическая загрузка ZIP не сработает, используйте отдельную кнопку «Скачать» напротив каждого теста — это прямые файлы на сайте.</div>`;
+}
+
+
+async function downloadMaterial(packId) {
+  if (!purchaseVerified || !verifiedPackIds.includes(packId)) {
+    return alert('Сначала пройдите проверку чека.');
+  }
+  const p = QUESTION_PACKS.find(x => x.id === packId);
+  if (!p) return alert('Файл теста не найден.');
+  try {
+    const res = await fetch('./' + p.material + '?v=2', {cache:'no-store'});
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    if (blob.size < 1000) throw new Error('Файл пустой или поврежден.');
+    saveBlob(blob, safeFileName(p.name) + '.pdf');
+  } catch (e) {
+    // Fallback: открыть точный PDF URL в новой вкладке.
+    const url = new URL('./' + p.material, window.location.href).href;
+    window.open(url, '_blank', 'noopener');
+  }
 }
 
 async function downloadSelectedAsZip() {
