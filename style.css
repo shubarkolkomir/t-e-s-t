@@ -499,10 +499,15 @@ header {
 .purchase-item-main{flex:1;min-width:0}.purchase-item-title{font-weight:600;font-size:15px;line-height:1.35}.purchase-item-sub{color:var(--muted);font-size:12px;margin-top:4px}.purchase-price{font-family:'Unbounded',sans-serif;font-size:13px;color:var(--orange);white-space:nowrap}
 .purchase-total{font-family:'Unbounded',sans-serif;font-size:18px}.purchase-total strong{color:var(--orange)}
 .card-number{font-family:'Unbounded',sans-serif;font-size:20px;letter-spacing:1.2px;margin:10px 0 8px;word-break:break-word}.copy-btn{border:0;background:var(--surface2);color:var(--text);padding:9px 12px;border-radius:9px;cursor:pointer}
-.receipt-drop{border:1.5px dashed rgba(255,255,255,.18);border-radius:14px;padding:24px;text-align:center;cursor:pointer;background:var(--surface2)}
+.receipt-drop{display:block;width:100%;box-sizing:border-box;border:1.5px dashed rgba(255,255,255,.18);border-radius:14px;padding:24px;text-align:center;cursor:pointer;background:var(--surface2);overflow:hidden}
 .receipt-drop:hover{border-color:var(--orange)}
 .receipt-drop input{display:none}.receipt-status{margin-top:12px;font-size:13px;color:var(--muted)}
 .purchase-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}.purchase-actions .btn{min-width:190px}
 .download-list{display:grid;gap:10px;margin-top:16px}.download-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}.download-row span{font-size:14px}.download-row button{padding:8px 12px}
 .purchase-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
 @media(max-width:700px){.purchase-list{grid-template-columns:1fr}.card-number{font-size:16px}.purchase-toolbar{align-items:flex-start}.purchase-total{font-size:15px}}
+
+.purchase-wrap *{box-sizing:border-box}
+.receipt-box{overflow:visible}
+.receipt-status{overflow-wrap:anywhere}
+@media(max-width:560px){.purchase-wrap{width:100%}.purchase-actions{flex-direction:column}.purchase-actions .btn{width:100%;min-width:0}.payment-box,.receipt-box,.purchase-toolbar{padding:16px}.receipt-drop{padding:20px 14px}.card-number{font-size:15px;letter-spacing:.7px}.download-row{align-items:flex-start;flex-direction:column}.download-row .btn{width:100%}}

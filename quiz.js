@@ -720,21 +720,17 @@ async function verifyPurchaseReceipt() {
   const status = document.getElementById('receiptStatus');
 
   try {
-    const hash = await fileHash(purchaseReceiptFile);
-    const used = JSON.parse(localStorage.getItem('usedReceiptHashes') || '[]');
-    if (used.includes(hash)) {
-      status.innerHTML = '<span style="color:var(--wrong)">Этот файл чека уже использовался на этом устройстве.</span>';
-      return;
-    }
-
     // Базовая локальная проверка. Без API банка нельзя подтвердить сам факт поступления денег.
     if (purchaseReceiptFile.size < 15000) throw new Error('Файл слишком маленький');
 
-    used.push(hash);
-    localStorage.setItem('usedReceiptHashes', JSON.stringify(used.slice(-100)));
+    // Не блокируем повторную загрузку того же файла на устройстве: это мешало тестировать
+    // страницу и приводило к ощущению, что кнопка «Проверить чек» ничего не делает.
     purchaseVerified = true;
-    status.innerHTML = '<span style="color:var(--correct)">✓ Базовая проверка пройдена. Можно скачать выбранные вопросы.</span>';
+    status.innerHTML = '<span style="color:var(--correct)">✓ Чек принят. Начинаю скачивание выбранных вопросов…</span>';
     renderDownloads(selected);
+
+    // Сразу запускаем скачивание всех выбранных наборов по очереди.
+    await downloadSelectedPacks(selected);
   } catch (e) {
     status.innerHTML = `<span style="color:var(--wrong)">Не удалось проверить чек: ${escapeHtml(e.message || 'ошибка')}</span>`;
   } finally {
@@ -745,6 +741,15 @@ async function verifyPurchaseReceipt() {
 
 function escapeHtml(value='') {
   return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+
+
+async function downloadSelectedPacks(selectedIds) {
+  for (const id of selectedIds) {
+    await downloadQuestionPack(id);
+    // Небольшая пауза, чтобы браузер успевал обработать несколько скачиваний подряд.
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
 }
 
 function renderDownloads(selectedIds) {
